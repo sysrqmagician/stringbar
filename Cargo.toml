@@ -2,6 +2,12 @@
 name = "stringbar"
 version = "0.1.0"
 edition = "2021"
+description = "A dwm-style status bar configured in RON"
+readme = "README.md"
+repository = "https://github.com/sysrqmagician/stringbar"
+license = "GPL-3.0-or-later"
+keywords = ["dwm", "status", "bar"]
+categories = ["command-line-utilities"]
 
 [dependencies]
 chrono = "0.4.38"
