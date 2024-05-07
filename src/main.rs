@@ -8,6 +8,7 @@ use std::{
     time::Duration,
 };
 
+use bittenhumans::ByteSizeFormatter;
 use chrono::Local;
 use directories::ProjectDirs;
 use notify::{RecommendedWatcher, Watcher};
@@ -175,19 +176,11 @@ fn main() {
                 Module::Timestamp { template } => Local::now().format(template).to_string(),
                 Module::MemoryUsage { si_units } => {
                     system.refresh_memory_specifics(MemoryRefreshKind::new().with_ram());
-                    format!(
-                        "{:.2}/{:.2}G",
-                        format_memory(system.used_memory(), *si_units),
-                        format_memory(system.total_memory(), *si_units)
-                    )
+                    format_byte_usage(system.used_memory(), system.total_memory(), *si_units)
                 }
                 Module::SwapUsage { si_units } => {
                     system.refresh_memory_specifics(MemoryRefreshKind::new().with_swap());
-                    format!(
-                        "{:.2}/{:.2}G",
-                        format_memory(system.used_swap(), *si_units),
-                        format_memory(system.total_swap(), *si_units)
-                    )
+                    format_byte_usage(system.used_swap(), system.total_swap(), *si_units)
                 }
                 Module::CpuUsage => {
                     system.refresh_cpu_specifics(CpuRefreshKind::new().with_cpu_usage());
@@ -223,10 +216,21 @@ fn main() {
     }
 }
 
-fn format_memory(value: u64, si_units: bool) -> f32 {
-    if si_units {
-        value as f32 / 1_000_000_000.0
-    } else {
-        value as f32 / 1_073_741_824.0
-    }
+fn format_byte_usage(used: u64, total: u64, si_units: bool) -> String {
+    type System = bittenhumans::consts::System;
+
+    let formatter = ByteSizeFormatter::fit(
+        total,
+        if si_units {
+            System::Decimal
+        } else {
+            System::Binary
+        },
+    );
+
+    format!(
+        "{}/{}",
+        formatter.format(used).split(" ").collect::<Vec<_>>()[0],
+        formatter.format(total)
+    )
 }
