@@ -1,4 +1,5 @@
 # stringbar
+![Crates.io Version](https://img.shields.io/crates/v/stringbar) ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/sysrqmagician/stringbar/rust) ![GitHub License](https://img.shields.io/github/license/sysrqmagician/stringbar) 
 A dwm-style status bar (sets X root window name).
 
 ## Features
