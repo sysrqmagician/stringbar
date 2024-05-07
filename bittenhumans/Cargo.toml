@@ -1,5 +1,6 @@
 [package]
 name = "bittenhumans"
+description = "Simple byte size humanization library for stringbar"
 version = "0.1.0"
 edition = "2021"
 
