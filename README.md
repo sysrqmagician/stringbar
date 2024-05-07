@@ -23,12 +23,13 @@ Execute ``just release`` and copy the resulting ``./stringbar`` binary to a dire
 - Start stringbar once to generate the default configuration file.
 - Edit $XDG_CONFIG_HOME/stringbar/config.ron
 ### Available modules
-|Name       |Description                 |
-|-----------|----------------------------|
-|CpuUsage   |Cpu utilization in percent  |
-|MemoryUsage|Memory usage and total      |
-|SwapUsage  |Swap usage and total        |
-|Timestamp  |A custom formatted timestamp|
+|Name        |Description                 |
+|------------|----------------------------|
+|CpuUsage    |Cpu utilization in percent  |
+|MemoryUsage |Memory usage and total      |
+|SwapUsage   |Swap usage and total        |
+|Timestamp   |A custom formatted timestamp|
+|ProcessCount|Number of processes running |
 ### Example
 ```ron
 (

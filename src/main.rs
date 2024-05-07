@@ -13,7 +13,7 @@ use directories::ProjectDirs;
 use notify::{RecommendedWatcher, Watcher};
 use ron::ser::PrettyConfig;
 use serde::{Deserialize, Serialize};
-use sysinfo::{CpuRefreshKind, MemoryRefreshKind, System};
+use sysinfo::{CpuRefreshKind, MemoryRefreshKind, ProcessRefreshKind, System};
 use tracing::{error, info};
 
 #[derive(Serialize, Deserialize)]
@@ -56,6 +56,7 @@ enum Module {
     MemoryUsage { si_units: bool },
     SwapUsage { si_units: bool },
     CpuUsage,
+    ProcessCount,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -192,6 +193,10 @@ fn main() {
                     system.refresh_cpu_specifics(CpuRefreshKind::new().with_cpu_usage());
 
                     format!("{:.2}%", system.global_cpu_info().cpu_usage())
+                }
+                Module::ProcessCount => {
+                    system.refresh_processes_specifics(ProcessRefreshKind::new());
+                    format!("{}", system.processes().len())
                 }
             };
 
