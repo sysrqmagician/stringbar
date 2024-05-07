@@ -11,7 +11,7 @@ use std::{
 use chrono::Local;
 use directories::ProjectDirs;
 use notify::{RecommendedWatcher, Watcher};
-use ron::ser::PrettyConfig;
+use ron::{extensions::Extensions, ser::PrettyConfig};
 use serde::{Deserialize, Serialize};
 use sysinfo::{CpuRefreshKind, MemoryRefreshKind, ProcessRefreshKind, System};
 use tracing::{error, info};
@@ -98,7 +98,7 @@ fn load_config(config_file_path: &Path) -> Option<Config> {
                 if let Err(e) = ron::ser::to_writer_pretty(
                     BufWriter::new(handle),
                     &new_config,
-                    PrettyConfig::new(),
+                    PrettyConfig::new().extensions(Extensions::all()),
                 ) {
                     error!("Unable to write to new config file: {e}");
                     return None;
