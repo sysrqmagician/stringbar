@@ -5,7 +5,9 @@ A dwm-style status bar (sets X root window name).
 - xsetroot
 
 ## Installation
-### From source
+### Using cargo
+Execute ``cargo install stringbar``
+### From source (x86_64 Linux only)
 #### Build Dependencies
 - [Just](https://github.com/casey/just)
 - [UPX](https://github.com/upx/upx)
