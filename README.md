@@ -26,42 +26,56 @@ Execute ``just release`` and copy the resulting ``./stringbar`` binary to a dire
 |Name        |Description                 |
 |------------|----------------------------|
 |CpuUsage    |Cpu utilization in percent  |
-|MemoryUsage |Memory usage and total      |
-|SwapUsage   |Swap usage and total        |
+|MemoryUsage |Memory usage out of total   |
+|SwapUsage   |Swap usage out of total     |
 |Timestamp   |A custom formatted timestamp|
 |ProcessCount|Number of processes running |
+|DiskUsage   |Amount of space used out of total on a specific disk|
+|DiskUsageTotal|Total amount of space used out of total on all storage devices|
 ### Example
 ```ron
+#![enable(implicit_some)]
+#![enable(unwrap_newtypes)]
+#![enable(unwrap_variant_newtypes)]
 (
     separator: " | ",
-    update_interval_ms: 500,
+    update_interval_ms: 1000,
+    decimal_data_units: false,
     sections: [
         (
+            module: MemoryUsage,
             decoration: (
-                before: Some("cpu "), // Text to prepend to module output
-                after: None, // Text to append to module output
-            ),
-            module: CpuUsage,
-        ),
-        (
-            decoration: (
-                before: Some("dram "),
+                before: "dram ",
                 after: None,
             ),
-            module: MemoryUsage(
-                si_units: false, // true for Gigabytes instead of Gibibytes
+        ),
+        (
+            module: DiskUsage(
+                name: "/dev/sda",
+            ),
+            decoration: (
+                before: "sda ",
+                after: None,
             ),
         ),
         (
+            module: DiskUsageTotal(
+                include_removables: false,
+            ),
+            decoration: (
+                before: "total ",
+                after: None,
+            ),
+        ),
+        (
+            module: Timestamp(
+                template: "%d/%m/%Y %H:%M",
+            ),
             decoration: (
                 before: None,
                 after: None,
             ),
-            module: Timestamp(
-                template: "%A, %d %B %Y | %H:%M:%S", // see https://docs.rs/chrono/latest/chrono/format/strftime/index.html for supported specifiers
-            ),
         ),
     ],
 )
-
 ```
