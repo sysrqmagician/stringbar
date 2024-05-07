@@ -1,6 +1,9 @@
 # stringbar
 A dwm-style status bar (sets X root window name).
 
+## Runtime Dependencies
+- xsetroot
+
 ## Installation
 ### From source
 #### Build Dependencies
