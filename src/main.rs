@@ -220,8 +220,8 @@ fn main() {
 
 fn format_memory(value: u64, si_units: bool) -> f32 {
     if si_units {
-        value as f32 / 1000000000.0
+        value as f32 / 1_000_000_000.0
     } else {
-        value as f32 / 1073741824.0
+        value as f32 / 1_073_741_824.0
     }
 }
