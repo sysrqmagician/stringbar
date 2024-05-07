@@ -14,13 +14,14 @@ use directories::ProjectDirs;
 use notify::{RecommendedWatcher, Watcher};
 use ron::{extensions::Extensions, ser::PrettyConfig};
 use serde::{Deserialize, Serialize};
-use sysinfo::{CpuRefreshKind, MemoryRefreshKind, ProcessRefreshKind, System};
+use sysinfo::{CpuRefreshKind, Disk, Disks, MemoryRefreshKind, ProcessRefreshKind, System};
 use tracing::{error, info};
 
 #[derive(Serialize, Deserialize)]
 struct Config {
     separator: String,
     update_interval_ms: u64,
+    decimal_data_units: bool,
     sections: Vec<Section>,
 }
 
@@ -29,13 +30,32 @@ impl Default for Config {
         Self {
             separator: " | ".into(),
             update_interval_ms: 1000,
+            decimal_data_units: false,
             sections: vec![
                 Section {
                     decoration: Decoration {
                         before: Some("dram ".into()),
                         after: None,
                     },
-                    module: Module::MemoryUsage { si_units: false },
+                    module: Module::MemoryUsage,
+                },
+                Section {
+                    decoration: Decoration {
+                        before: Some("sda ".into()),
+                        after: None,
+                    },
+                    module: Module::DiskUsage {
+                        name: "/dev/sda".into(),
+                    },
+                },
+                Section {
+                    decoration: Decoration {
+                        before: Some("total ".into()),
+                        after: None,
+                    },
+                    module: Module::DiskUsageTotal {
+                        include_removables: false,
+                    },
                 },
                 Section {
                     decoration: Decoration {
@@ -54,10 +74,12 @@ impl Default for Config {
 #[derive(Serialize, Deserialize)]
 enum Module {
     Timestamp { template: String },
-    MemoryUsage { si_units: bool },
-    SwapUsage { si_units: bool },
+    MemoryUsage,
+    SwapUsage,
     CpuUsage,
     ProcessCount,
+    DiskUsage { name: String },
+    DiskUsageTotal { include_removables: bool },
 }
 
 #[derive(Serialize, Deserialize)]
@@ -136,7 +158,7 @@ fn main() {
     let config = Arc::new(Mutex::new(
         load_config(&config_file_path).expect("Initial config load failed, exiting."),
     ));
-    let mut system = System::new();
+
     let mut watcher;
     {
         let config = config.clone();
@@ -167,20 +189,33 @@ fn main() {
         error!("Unable to start watching config: {e}");
     };
 
+    let mut system = System::new();
+    let mut disks = Disks::new();
+
     loop {
         let mut output = String::new();
         let config = config.lock().unwrap();
         let interval = config.update_interval_ms;
+        let mut disks_refreshed = false;
+
         for section in &config.sections {
             let module_out = match &section.module {
                 Module::Timestamp { template } => Local::now().format(template).to_string(),
-                Module::MemoryUsage { si_units } => {
+                Module::MemoryUsage => {
                     system.refresh_memory_specifics(MemoryRefreshKind::new().with_ram());
-                    format_byte_usage(system.used_memory(), system.total_memory(), *si_units)
+                    format_byte_usage(
+                        system.used_memory(),
+                        system.total_memory(),
+                        config.decimal_data_units,
+                    )
                 }
-                Module::SwapUsage { si_units } => {
+                Module::SwapUsage => {
                     system.refresh_memory_specifics(MemoryRefreshKind::new().with_swap());
-                    format_byte_usage(system.used_swap(), system.total_swap(), *si_units)
+                    format_byte_usage(
+                        system.used_swap(),
+                        system.total_swap(),
+                        config.decimal_data_units,
+                    )
                 }
                 Module::CpuUsage => {
                     system.refresh_cpu_specifics(CpuRefreshKind::new().with_cpu_usage());
@@ -190,6 +225,41 @@ fn main() {
                 Module::ProcessCount => {
                     system.refresh_processes_specifics(ProcessRefreshKind::new());
                     format!("{}", system.processes().len())
+                }
+                Module::DiskUsage { name } => {
+                    if !disks_refreshed {
+                        disks.refresh_list();
+                        disks_refreshed = true;
+                    }
+
+                    if let Some(disk) = disks.iter().find(|x| x.name().to_string_lossy().eq(name)) {
+                        let used = disk.total_space() - disk.available_space();
+
+                        format_byte_usage(used, disk.total_space(), config.decimal_data_units)
+                    } else {
+                        "N/A".into()
+                    }
+                }
+                Module::DiskUsageTotal { include_removables } => {
+                    if !disks_refreshed {
+                        disks.refresh_list();
+                        disks_refreshed = true;
+                    }
+
+                    let mut total = 0;
+                    let mut used = 0;
+
+                    let mut filtered_disks: Vec<&Disk> = disks.iter().collect();
+                    if !include_removables {
+                        filtered_disks = disks.iter().filter(|x| !x.is_removable()).collect();
+                    }
+
+                    for disk in filtered_disks {
+                        total += disk.total_space();
+                        used += disk.total_space() - disk.available_space();
+                    }
+
+                    format_byte_usage(used, total, config.decimal_data_units)
                 }
             };
 
