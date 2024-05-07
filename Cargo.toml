@@ -10,7 +10,7 @@ keywords = ["dwm", "status", "bar"]
 categories = ["command-line-utilities"]
 
 [dependencies]
-bittenhumans = { path = "./bittenhumans" }
+bittenhumans = { version = "0.1.0", path = "./bittenhumans" }
 chrono = "0.4.38"
 directories = "5.0.1"
 notify = "6.1.1"
